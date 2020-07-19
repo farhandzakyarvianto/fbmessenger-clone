@@ -2,17 +2,23 @@ import React, { useState, useEffect } from "react";
 import { Button, FormControl, InputLabel, Input } from "@material-ui/core";
 import Message from "./Message";
 import "./App.css";
+import db from "./firebase";
+import firebase from "firebase";
 
 function App() {
     const [input, setInput] = useState("");
-    const [messages, setMessage] = useState([
-        { username: "farhan", text: "hey guys" },
-        { username: "dzaky", text: "oi" },
-        { username: "a", text: "s" },
-    ]);
+    const [messages, setMessages] = useState([]);
     const [username, setUsername] = useState("");
 
-    //if its blank inside [], this code runs ONCE when the app component loads
+    // eseEffect if its blank inside [], this code runs ONCE when the app component loads
+
+    useEffect(() => {
+        db.collection("messages")
+            .orderBy('timestamp', 'desc')
+            .onSnapshot((snapshot) => {
+                setMessages(snapshot.docs.map((doc) => doc.data()));
+            });
+    }, []);
 
     useEffect(() => {
         setUsername(prompt("Please enter your name"));
@@ -21,7 +27,12 @@ function App() {
     const sendMessage = (event) => {
         // all the logic to send a messege goes
         event.preventDefault();
-        setMessage([...messages, { username: username, text: input }]);
+        db.collection("messages").add({
+            message: input,
+            username: username,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+        setMessages([...messages, { username: username, message: input }]);
         setInput("");
     };
     return (
